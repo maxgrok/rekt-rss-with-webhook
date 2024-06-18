@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekt News RSS Feed</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #rss-feed {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Rekt News RSS Feed</h1>
+    <button id="refresh-button">Refresh Feed</button>
+    <div id="rss-feed"></div>
+
+    <script>
+        document.getElementById('refresh-button').addEventListener('click', function() {
+            fetch('/run-script', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message === "Script executed successfully") {
+                        loadRSSFeed();
+                    } else {
+                        alert('Failed to refresh feed');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error executing script');
+                });
+        });
+
+        function loadRSSFeed() {
+            fetch('/rss-feed')
+                .then(response => response.text())
+                .then(data => {
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(data, "text/xml");
+                    const items = xmlDoc.getElementsByTagName('item');
+                    let html = '<ul>';
+                    for (let i = 0; i < items.length; i++) {
+                        const title = items[i].getElementsByTagName('title')[0].textContent;
+                        const description = items[i].getElementsByTagName('description')[0].textContent;
+                        const pubDate = items[i].getElementsByTagName('pubDate')[0].textContent;
+                        html += `<li><strong>${title}</strong><br>${description}<br><em>${pubDate}</em></li><hr>`;
+                    }
+                    html += '</ul>';
+                    document.getElementById('rss-feed').innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Error loading RSS feed:', error);
+                });
+        }
+
+        // Load the RSS feed on page load
+        window.onload = loadRSSFeed;
+    </script>
+</body>
+</html>
